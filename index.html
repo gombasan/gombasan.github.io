@@ -151,6 +151,47 @@
     figure, tr, .metrics { break-inside: avoid; }
     figure img { max-height: 115mm; object-fit: contain; }
   }
+  @media screen {
+    .presentation main { margin-bottom: 86px; }
+    .presentation .slide { margin-top: 0; min-height: calc(100svh - 116px); }
+    .presentation .slide[hidden] { display: none; }
+    .presentation .slide-label { margin-bottom: 12px; color: var(--blue); font-size: .85rem; font-weight: 700; }
+    .presentation .slide > h3 { margin-top: 0; }
+    .presentation .slide figure img { max-height: 62svh; object-fit: contain; }
+    .presentation .slide figure a { display: block; }
+    .presentation .slide figure a:focus-visible { outline-offset: 6px; }
+    .presentation-controls {
+      position: fixed;
+      inset: auto 0 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: clamp(6px, 2vw, 20px);
+      padding: 10px 8px max(10px, env(safe-area-inset-bottom));
+      background: var(--navy);
+      color: white;
+    }
+    .presentation-controls[hidden] { display: none; }
+    .presentation-controls button {
+      min-height: 44px;
+      border: 1px solid #7294bd;
+      border-radius: 6px;
+      padding: 4px clamp(8px, 2vw, 16px);
+      background: transparent;
+      color: white;
+      font: inherit;
+      cursor: pointer;
+    }
+    .presentation-controls button:hover:not(:disabled) { background: #24496e; }
+    .presentation-controls button:disabled { opacity: .42; cursor: default; }
+    .presentation-controls button:focus-visible { outline: 2px solid #a7cfff; outline-offset: 2px; }
+    .presentation-controls output { min-width: 7ch; text-align: center; font-variant-numeric: tabular-nums; }
+  }
+  @media print {
+    .presentation-controls, .slide-label { display: none; }
+    .slide[hidden] { display: revert; }
+    .slide figure a::after { content: none; }
+  }
 </style>
 </head>
 <body>
@@ -306,5 +347,117 @@
 </ul>
 </section>
 </main>
+<div class="presentation-controls" role="group" aria-label="슬라이드 이동" hidden>
+  <button type="button">목차</button>
+  <button type="button" data-step="-1">이전</button>
+  <output aria-live="polite"></output>
+  <button type="button" data-step="1">다음</button>
+</div>
+<script>
+  const main = document.querySelector('main');
+  const originalSections = [...main.children];
+  const slides = [];
+
+  function registerSlide(slide) {
+    slide.classList.add('slide');
+    slide.id ||= 'slide-' + (slides.length + 1);
+    slide.tabIndex = -1;
+    slides.push(slide);
+  }
+
+  for (const section of originalSections) {
+    if (!section.classList.contains('chapter')) {
+      registerSlide(section);
+      continue;
+    }
+
+    const chapterTitle = section.querySelector('h2').textContent;
+    const children = [...section.children];
+    registerSlide(section);
+    let current = section;
+
+    for (const child of children) {
+      if (child.matches('h3') || child.matches('figure')) {
+        const next = document.createElement('section');
+        next.className = 'chapter';
+        const label = document.createElement('p');
+        label.className = 'slide-label';
+        label.textContent = chapterTitle;
+        next.append(label);
+        current.after(next);
+        registerSlide(next);
+        current = next;
+      }
+      if (child.matches('figure')) {
+        const image = child.querySelector('img');
+        const link = document.createElement('a');
+        link.href = image.getAttribute('src');
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.setAttribute('aria-label', image.alt + ' 원본 보기');
+        image.before(link);
+        link.append(image);
+      }
+      if (child.parentElement !== current) current.append(child);
+    }
+  }
+
+  const controls = document.querySelector('.presentation-controls');
+  const previous = controls.querySelector('[data-step="-1"]');
+  const next = controls.querySelector('[data-step="1"]');
+  const counter = controls.querySelector('output');
+  let currentIndex = 0;
+
+  function showSlide(index, focus = false) {
+    currentIndex = Math.min(slides.length - 1, Math.max(0, index));
+    const active = slides[currentIndex];
+    for (const slide of slides) slide.hidden = slide !== active;
+    previous.disabled = currentIndex === 0;
+    next.disabled = currentIndex === slides.length - 1;
+    counter.value = (currentIndex + 1) + ' / ' + slides.length;
+    if (focus) active.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }
+
+  function goTo(index, focus = false) {
+    const slide = slides[index];
+    if (!slide) return;
+    if (location.hash !== '#' + slide.id) history.pushState(null, '', '#' + slide.id);
+    showSlide(index, focus);
+  }
+
+  function syncHash() {
+    const index = slides.findIndex(slide => '#' + slide.id === location.hash);
+    showSlide(index < 0 ? 0 : index);
+  }
+
+  controls.addEventListener('click', event => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    goTo(button.dataset.step ? currentIndex + Number(button.dataset.step) : 0, true);
+  });
+
+  main.querySelector('nav').addEventListener('click', event => {
+    const link = event.target.closest('a[href^="#"]');
+    if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const index = slides.findIndex(slide => '#' + slide.id === link.hash);
+    if (index < 0) return;
+    event.preventDefault();
+    goTo(index, true);
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    goTo(currentIndex + (event.key === 'ArrowRight' ? 1 : -1), true);
+  });
+
+  window.addEventListener('popstate', syncHash);
+  window.addEventListener('hashchange', syncHash);
+  document.body.classList.add('presentation');
+  controls.hidden = false;
+  syncHash();
+</script>
 </body>
 </html>

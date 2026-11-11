@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="530" viewBox="0 0 1200 530" role="img" aria-labelledby="title desc">
+  <title id="title">IoT 백엔드 모듈 분리 설계안</title>
+  <desc id="desc">TCP 수집 서버가 Outbox에 저장한 이벤트를 냉매와 콜드체인 API에 각각 전달하는 설계안입니다. 두 API는 공통 device-core를 참조하고 각각 전용 모니터링 화면에 데이터를 제공합니다.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10Z" fill="#087970"/>
+    </marker>
+    <style>
+      text {font-family:"Malgun Gothic","Noto Sans KR",sans-serif;fill:#14283c}
+      .name {font-size:21px;font-weight:700}
+      .body {font-size:16px;fill:#40576a}
+      .edge {fill:none;stroke:#087970;stroke-width:2;marker-end:url(#arrow)}
+      .icon {fill:none;stroke:#087970;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  <rect width="1200" height="530" fill="white"/>
+  <text x="30" y="47" font-size="29" font-weight="700">IoT 백엔드 모듈 분리 설계안</text>
+  <rect x="206" y="80" width="780" height="383" rx="18" fill="#f2f8f8" stroke="#a6c9c5"/>
+  <text x="229" y="115" class="name">gateway-bootstrap</text>
+  <text x="229" y="141" class="body">TCP 수집 서버와 도메인별 API 실행 구성</text>
+
+  <g class="icon" transform="translate(64 197)">
+    <rect x="0" y="23" width="59" height="25" rx="5"/><path d="M29 23V10m-9 4a13 13 0 0 1 18 0m-24-6a22 22 0 0 1 30 0M10 35h4m7 0h4"/>
+  </g>
+  <text x="94" y="276" text-anchor="middle" class="name">게이트웨이</text>
+  <text x="94" y="301" text-anchor="middle" class="body">센서 측정값 전송</text>
+  <path d="M138 237H228" class="edge"/>
+  <text x="172" y="223" text-anchor="middle" class="body">TCP</text>
+
+  <rect x="230" y="167" width="315" height="166" rx="12" fill="white" stroke="#76b0a9"/>
+  <g class="icon" transform="translate(253 188)">
+    <rect width="26" height="11" rx="2"/><rect y="15" width="26" height="11" rx="2"/><path d="M5 5h2m-2 15h2"/>
+  </g>
+  <text x="292" y="208" class="name">tcp-server</text>
+  <text x="253" y="243" class="body">패킷 수신 및 파싱</text>
+  <text x="253" y="270" class="body">수집 이벤트를 Outbox에 기록</text>
+  <text x="253" y="297" class="body">저장 커밋 후 게이트웨이에 ACK</text>
+
+  <path d="M300 333V367" class="edge"/>
+  <rect x="230" y="369" width="143" height="70" rx="10" fill="#e4f0ef" stroke="#a6c9c5"/>
+  <text x="301.5" y="397" text-anchor="middle" font-size="16" font-weight="700">TCP DB Outbox</text>
+  <text x="301.5" y="422" text-anchor="middle" class="body">수집 이벤트 저장</text>
+  <path d="M373 403H397" class="edge"/>
+  <rect x="399" y="369" width="146" height="70" rx="10" fill="white" stroke="#76b0a9"/>
+  <text x="472" y="397" text-anchor="middle" font-size="16" font-weight="700">별도 전달 작업</text>
+  <text x="472" y="422" text-anchor="middle" class="body">대기 이벤트 조회</text>
+  <path d="M545 403H590V195H643" class="edge"/>
+  <path d="M590 296H643" class="edge"/>
+  <text x="590" y="179" text-anchor="middle" class="body">HTTP</text>
+
+  <path d="M645 217H622V403H645 M645 319H622"
+    fill="none" stroke="#536a7a" stroke-width="2" stroke-dasharray="5 4"/>
+  <rect x="645" y="150" width="315" height="90" rx="12" fill="white" stroke="#76b0a9"/>
+  <text x="668" y="178" class="name">refrigerant-api</text>
+  <text x="668" y="203" class="body">냉매 측정 이력 저장</text>
+  <text x="668" y="224" class="body">실시간 발행 및 기간별 조회</text>
+  <rect x="645" y="251" width="315" height="90" rx="12" fill="white" stroke="#76b0a9"/>
+  <text x="668" y="279" class="name">coldchain-api</text>
+  <text x="668" y="304" class="body">콜드체인 측정 이력 저장</text>
+  <text x="668" y="325" class="body">실시간 발행 및 기간별 조회</text>
+  <rect x="645" y="369" width="315" height="70" rx="10" fill="#e4f0ef" stroke="#a6c9c5"/>
+  <text x="668" y="397" class="name">device-core</text>
+  <text x="668" y="422" class="body">공통 장비 모델 및 설정 관리</text>
+
+  <path d="M960 195H1081 M960 296H1081" class="edge" marker-start="url(#arrow)"/>
+  <text x="1022" y="180" text-anchor="middle" class="body">WS / REST</text>
+  <text x="1022" y="281" text-anchor="middle" class="body">WS / REST</text>
+  <g class="icon" transform="translate(1083 175)">
+    <rect width="66" height="42" rx="5"/><path d="M33 42v8m-12 0h24M10 29l12-7 9 3 13-12 12 4"/>
+  </g>
+  <g class="icon" transform="translate(1083 276)">
+    <rect width="66" height="42" rx="5"/><path d="M33 42v8m-12 0h24M10 29l12-7 9 3 13-12 12 4"/>
+  </g>
+  <text x="1116" y="247" text-anchor="middle" font-size="17" font-weight="700">냉매 모니터링</text>
+  <text x="1116" y="348" text-anchor="middle" font-size="17" font-weight="700">콜드체인 모니터링</text>
+  <text x="30" y="502" class="body">실선은 데이터 흐름, 점선은 모듈 참조를 나타냅니다.</text>
+</svg>

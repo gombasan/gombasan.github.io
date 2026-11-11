@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한태희 | 백엔드 개발 포트폴리오</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #14263c;
+    --muted: #4a6078;
+    --navy: #101f35;
+    --blue: #205bb2;
+    --line: #dbe4ef;
+    --paper: #fff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #edf2f8;
+    color: var(--ink);
+    font: 16px/1.75 "Inter", "Malgun Gothic", sans-serif;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  main { max-width: 1120px; margin: 30px auto 64px; padding-inline: 20px; }
+  a { color: var(--blue); text-underline-offset: .22em; }
+  a:focus-visible { outline: 2px solid #64a4ff; outline-offset: 4px; }
+  h1, h2, h3 { line-height: 1.24; letter-spacing: -.05em; }
+  p { margin: 0 0 1em; }
+  .intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(220px, 1fr);
+    gap: clamp(32px, 7vw, 92px);
+    align-items: end;
+    padding: clamp(28px, 7vw, 86px);
+    background: linear-gradient(140deg, #101f35, #183657);
+    color: #fff;
+  }
+  .intro-copy > p:not(.kicker) { max-width: 47ch; color: #dbe7f5; }
+  .kicker { color: #a7cfff; font-size: .9rem; font-weight: 700; }
+  h1 { margin: 0 0 .32em; font-size: clamp(58px, 10vw, 115px); font-weight: 800; }
+  .intro-link a {
+    display: inline-block;
+    margin-top: .7em;
+    padding: .3em .95em;
+    border: 1px solid #7294bd;
+    border-radius: 100px;
+    color: white;
+    text-decoration: none;
+  }
+  .intro-link a:hover { background: #24496e; }
+  .contents > p { margin-bottom: .45em; color: #a7cfff; font-size: .85rem; font-weight: 700; }
+  nav { display: grid; }
+  nav a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: .65em 0;
+    border-top: 1px solid #527094;
+    color: #fff;
+    text-decoration: none;
+  }
+  nav a::after { content: "↘"; color: #a7cfff; }
+  nav a:hover { color: #a7cfff; }
+  .chapter {
+    margin-top: 12px;
+    padding: clamp(24px, 6vw, 76px);
+    background: var(--paper);
+  }
+  h2 { margin: 0 0 .55em; font-size: clamp(29px, 5vw, 51px); }
+  h3 { margin: 2em 0 .72em; font-size: clamp(19px, 3vw, 28px); }
+  ul { padding-inline-start: 1.35em; }
+  li + li { margin-top: .75em; }
+  code { color: #164681; background: #edf3fb; padding: .1em .3em; border-radius: 4px; }
+  .cover {
+    display: grid;
+    place-items: center;
+    min-height: clamp(300px, 67vw, 620px);
+    margin-top: 34px;
+    padding: 36px 24px;
+    color: white;
+    text-align: center;
+  }
+  .cover > div { width: min(90%, 530px); }
+  .cover p { margin: 0; color: #e7f1ff; }
+  .cover h2 { margin: .28em 0 .4em; font-size: clamp(40px, 8vw, 88px); }
+  .iot {
+    background:
+      radial-gradient(ellipse at 80% 18%, #2a537d 0, transparent 56%),
+      linear-gradient(140deg, #0e1d33, #172f50);
+  }
+  .wecargo { background: var(--blue); }
+  .wecargo img { display: block; width: 100%; height: auto; margin: 0 auto 18px; }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-block: 28px;
+  }
+  .metrics > div { padding: clamp(14px, 3vw, 25px); background: #eef4fc; border-top: 3px solid var(--blue); }
+  .metrics strong { display: block; color: #173d75; font-size: clamp(25px, 4vw, 43px); line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .metrics strong span { color: #4173ae; }
+  .metrics small { margin-inline-start: .2em; font-size: .48em; }
+  .metrics p { margin: .65em 0 0; font-size: .88em; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: .9em; }
+  th, td { border-bottom: 1px solid var(--line); padding: .7em .8em; vertical-align: top; }
+  th { background: #eaf1fa; text-align: left; }
+  tbody tr:nth-child(even) { background: #f7f9fc; }
+  figure { margin: 1.6em 0; padding: clamp(8px, 2vw, 16px); border: 1px solid var(--line); background: #f7f9fc; }
+  figure img { display: block; max-width: 100%; height: auto; margin-inline: auto; }
+  figcaption { margin: .7em .15em .15em; color: var(--muted); font-size: .86em; }
+  @media screen and (max-width: 680px) {
+    main { margin-top: 12px; padding-inline: 12px; }
+    .intro { grid-template-columns: 1fr; }
+  }
+  @media screen and (max-width: 440px) {
+    .metrics { grid-template-columns: 1fr; }
+    table { font-size: .8em; }
+    th, td { padding: .5em .35em; }
+  }
+  @page { size: A4 portrait; margin: 15mm; }
+  @page project { size: A4 portrait; margin: 0; }
+  @media print {
+    body { background: white; font-size: 10.5pt; }
+    main { max-width: none; margin: 0; padding: 0; }
+    .intro { display: block; padding: 0 0 5mm; background: white; color: var(--ink); }
+    .intro-copy > p:not(.kicker), .kicker { color: var(--muted); }
+    h1 { font-size: 35pt; }
+    h2 { font-size: 24pt; }
+    h3 { font-size: 15pt; }
+    .contents { display: none; }
+    .intro-link a { margin: 0; padding: 0; border: 0; color: var(--blue); }
+    .chapter { margin: 0; padding: 0; }
+    .chapter + .chapter { margin-top: 7mm; }
+    .cover {
+      page: project;
+      break-before: page;
+      break-after: page;
+      width: 210mm;
+      height: 296.9mm;
+      min-height: 0;
+      margin: 0;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .cover h2 { font-size: 44pt; }
+    .cover > div { max-width: 130mm; }
+    h2, h3 { break-after: avoid; }
+    figure, tr, .metrics { break-inside: avoid; }
+    figure img { max-height: 115mm; object-fit: contain; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="intro">
+  <div class="intro-copy">
+    <p class="kicker">백엔드 개발 포트폴리오</p>
+    <h1>한태희</h1>
+    <p>Java와 Spring Boot로 B2B 물류 플랫폼과 IoT 모니터링 시스템을 개발했습니다. 네트워크 엔지니어로 기업망 구축과 운영을 경험한 뒤 백엔드 개발로 전환했습니다. 위앨리스에서는 데이터 모델과 API 설계, 장비 통신, 외부 서비스 연동, AWS 배포와 운영을 담당했습니다.</p>
+    <div class="intro-link"><a href="https://github.com/gombasan">GitHub</a></div>
+  </div>
+  <aside class="contents">
+    <p>목차</p>
+    <nav aria-label="포트폴리오 목차">
+<a href="#chapter-skills">기술 스택</a>
+<a href="#chapter-iot">IoT 디바이스 모니터링</a>
+<a href="#chapter-wecargo">WECARGO</a>
+<a href="#chapter-talks">사내 기술 발표</a>
+<a href="#chapter-earlier">이전 프로젝트</a>
+    </nav>
+  </aside>
+</header>
+<section class="chapter" id="chapter-skills"><h2>기술 스택</h2>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>기술</th>
+<th>적용 경험</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>백엔드</td>
+<td>Java, Spring Boot, Spring Security, JPA, MyBatis</td>
+<td>서비스 API, 인증과 권한, 대용량 데이터 추출</td>
+</tr>
+<tr>
+<td>실시간 데이터 전송</td>
+<td>WebSocket, STOMP</td>
+<td>게이트웨이와 공간 단위로 센서 수집 이벤트 발행</td>
+</tr>
+<tr>
+<td>데이터베이스</td>
+<td>MySQL</td>
+<td>실행 계획 분석, 복합 인덱스와 유니크 제약 적용</td>
+</tr>
+<tr>
+<td>장비 통신과 시험 도구</td>
+<td>TCP, Java NIO, Node.js</td>
+<td>장비 수집 서버와 가상 게이트웨이 개발</td>
+</tr>
+<tr>
+<td>배포와 운영</td>
+<td>AWS EC2, RDS, SES, Docker, Nginx, GitHub Actions, Linux</td>
+<td>배포 자동화, HTTPS와 DNS 구성, 메일 발송 운영</td>
+</tr>
+<tr>
+<td>모니터링과 부하 검증</td>
+<td>Spring Boot Actuator, Prometheus, Grafana, Uptime Kuma, JMeter, nGrinder</td>
+<td>서버 지표와 API 가용성 모니터링, 사용자 시나리오와 부하 시험</td>
+</tr>
+</tbody>
+</table>
+</section>
+<header class="cover iot" id="chapter-iot"><div><p>콜드체인과 냉매 센서</p><h2>IoT 디바이스<br>모니터링</h2><p>TCP 수집 서버와 서비스 API</p></div></header>
+<section class="chapter"><h2>IoT 디바이스 모니터링</h2>
+<p><strong>위앨리스 | 2024년 1월부터 단계별 개발 | TCP 수집 서버와 서비스 API 전담</strong></p>
+<p>콜드체인과 냉매 누출 감지에 쓰이는 게이트웨이와 센서의 데이터를 수집하고 조회하는 시스템입니다. TCP 서버는 장비 연결과 프로토콜 처리, 데이터 수집을 담당하고, 서비스 API는 모니터링 목적에 따른 조회와 업무 규칙을 처리하도록 나눴습니다. 수집 데이터는 DB Outbox를 거쳐 HTTP로 전달하고, 전송 실패 시 재시도하며, 수신 서버는 이벤트 ID로 중복 처리를 막았습니다.</p>
+<p><strong>맡은 역할</strong> — TCP 수집 서버와 서비스 API를 전담했습니다. 장비 데이터 수집부터 WebSocket 실시간 전송과 차트용 조회 API까지 개발하고, 실장비 연동과 양산 전 부하 검증을 맡았습니다. 모니터링 화면을 개발하는 프론트엔드 개발자와 협업했습니다.</p>
+<div class="metrics" aria-label="IoT 프로젝트 주요 성과">
+  <div><strong>300 <span>→</span> 900<small>대</small></strong><p>기준을 충족한 최대 동시 접속 시험 단계</p></div>
+  <div><strong>2,130 <span>→</span> 667<small>ms</small></strong><p>센서 타임라인 API 응답 시간</p></div>
+</div><h3>개발 경과</h3>
+<ul>
+<li><strong>2024년 1~4월 | 콜드체인 수집 서버 재구축</strong> — 문서가 없던 기존 Node.js TCP 수집 서버의 코드와 동작을 분석해 문서로 정리하면서 Spring Boot로 재구축했습니다. 기존에 함께 처리하던 TPMS 타이어 정보 처리를 제거하고 콜드체인 측정값만 저장하도록 변경했습니다. 간단한 웹 화면에 실제 센서 측정값을 표시할 수 있도록 API를 구현하고 SSE로 수집 이벤트를 전송했습니다. 외부 업체가 관리하던 AWS 환경을 이관받고, AWS 3계층 아키텍처를 참고해 서버 환경을 새로 구성했습니다.</li>
+<li><strong>2025년 9월 | 신규 콜드체인 장비 연동 재개</strong> — 2024년 신규 장비 개발 논의에 참여했고, 2025년 9월 서버 연동 작업을 재개했습니다. 펌웨어 개발팀과 전송 프로토콜과 서버 수신 방식을 협의했습니다. 제가 제안한 데이터 전송 암호화 방식이 채택됐고, 연동 테스트에 사용할 데모 규격을 문서로 공유했습니다.</li>
+<li><strong>2025년 11~12월 | 냉매 센서 연동 추가</strong> — 콜드체인에 이어 냉매 센서를 연동했습니다. 당시에는 단일 서버가 두 종류의 장비에서 TCP로 데이터를 수집하고 API 요청에도 응답했습니다. 12월에 두 종류의 실제 장비에서 데이터가 정상적으로 수집되는 것을 확인했습니다.</li>
+<li><strong>2026년 3~5월 | TCP 전용 수집 서버 분리 및 부하 테스트</strong> — 콜드체인과 냉매는 서로 다른 게이트웨이를 사용하지만, 게이트웨이가 센서 데이터를 모아 전송하는 구조는 같았습니다. 장비 연결과 패킷 처리를 공통 TCP 전용 수집 서버로 분리하고, 수집 이후의 데이터 조회와 실시간 모니터링은 각 서비스의 요구에 맞춰 확장할 수 있도록 설계했습니다. 분리 작업과 함께 장비 수를 단계적으로 늘리는 TCP 부하 테스트를 진행해 응답률과 응답 시간을 확인했습니다.</li>
+</ul>
+<h3>서비스 확장을 고려한 모듈 설계</h3>
+<p>TCP 수집과 모니터링 API의 역할을 나누고, 게이트웨이와 센서의 공통 모델 및 설정 관리는 <code>device-core</code>에 모았습니다. 현재 <code>refrigerant-api</code>에서 냉매와 콜드체인의 모니터링 기능을 함께 제공합니다.</p>
+<p>두 서비스의 조회와 알림 요구가 달라질 때를 고려해 <code>refrigerant-api</code>와 <code>coldchain-api</code>를 별도 모듈로 구성하는 방안을 설계했습니다. 각 API가 전용 모니터링 화면에 데이터를 제공하면서 공통 TCP 수집 흐름과 <code>device-core</code>의 장비 관리 기능을 재사용하는 구조입니다.</p>
+<figure><img src="/asset/iot-architecture.svg" alt="IoT 백엔드 모듈 분리 설계안" /><figcaption>모듈 분리 설계안. TCP 수집 데이터는 Outbox를 거쳐 서비스별 API로 전달되고, 각 API는 공통 장비 관리 모듈을 참조합니다.</figcaption></figure>
+<h3>실시간 모니터링과 차트용 센서 조회 API</h3>
+<ul>
+<li><strong>실시간 수집 데이터 전송</strong> — 서비스 API가 받은 센서 데이터를 WebSocket과 STOMP로 발행했습니다. 콜드체인은 게이트웨이별, 냉매 모니터링은 공간별로 구독할 수 있게 해 화면에서 보고 있는 대상의 새 측정값을 받을 수 있도록 했습니다.</li>
+<li><strong>기간별 센서 타임라인 조회</strong> — 요청한 기간의 수집 데이터를 센서별로 묶고, 측정값과 수집 시각을 함께 반환하는 REST API를 개발했습니다. 수집 시각을 밀리초 단위 타임스탬프로 제공해 프론트엔드가 센서별 시계열 차트를 그릴 수 있도록 응답을 구성했습니다.</li>
+</ul>
+<h3>실제 장비에서 발생한 TCP 분할 수신과 부분 송신 처리</h3>
+<p>실장비 연동 중 수신 데이터가 나뉘어 들어오면서 패킷 파싱이 실패했습니다. 연결별 버퍼에 데이터를 누적해 완성된 프레임만 꺼내고, 남은 바이트는 다음 읽기까지 보존하도록 바꿨습니다. 송신은 Selector 스레드가 연결별 큐를 관리하도록 정리하고, 한 번에 보내지 못한 데이터는 동일한 ByteBuffer에서 이어서 전송하도록 구현했습니다.</p>
+<p>게이트웨이 3대와 센서 8개를 연결해 동작을 확인했습니다. 연속 패킷, 미완성 프레임, 부분 송신과 송신 순서 등은 테스트 코드로 검증했습니다.</p>
+<h3>2026년 10월 TCP 패킷 처리 개선과 부하 검증</h3>
+<p>양산을 앞두고 장비가 늘어날 때의 처리 범위를 확인하기 위해 Node.js로 가상 게이트웨이 도구를 직접 개발했습니다. 60초 주기 분산 전송과 동시 접속을 별도 시나리오로 설계하고, 연결 시도부터 10초 이내에 수신 확인 응답(ACK)이 도착한 비율을 집계했습니다.</p>
+<figure><img src="/asset/iot-test-settings.png" alt="IoT Load Lab 테스트 설정과 단계별 실행 계획" /><figcaption>시험 설정 예시. 장비 수와 증가폭, 측정 시간을 입력하면 단계별 장비 수와 예상 요청 부하를 실행 전에 확인할 수 있습니다.</figcaption></figure>
+<figure><img src="/asset/iot-test-results.png" alt="IoT Load Lab 실행 결과 기록과 JSON 다운로드" /><figcaption>시험 결과 기록. 실행 상태와 마지막 통과 단계를 확인하고, 회차별 상세 결과를 JSON으로 내려받을 수 있습니다.</figcaption></figure>
+<p>2026년 10월에는 Selector 스레드가 소켓 입출력과 함께 처리하던 패킷 파싱, 설정 조회, Outbox 저장을 별도 작업 스레드 풀로 옮겼습니다. Selector는 연결과 프레임 분리, 응답 전송을 담당하도록 했습니다. 같은 연결의 패킷은 한 번에 하나씩 처리하고, Outbox 저장이 커밋된 뒤 ACK를 보내는 순서를 유지했습니다. 외부 알림도 비동기로 분리하고, TCP 처리와 API 서버로의 HTTP 전달을 구분해 시험할 수 있도록 부하 시험용 프로파일을 추가했습니다.</p>
+<p>변경 전후 시험에서 <strong>5회 모두 정상 응답률 90% 이상을 기록한 최대 동시 접속 시험 단계가 300대에서 900대로 늘었습니다.</strong></p>
+<table>
+<thead>
+<tr>
+<th>시험 지표</th>
+<th style="text-align: right;">변경 전</th>
+<th style="text-align: right;">변경 후</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>동시 접속에서 5회 모두 기준을 충족한 최대 단계</td>
+<td style="text-align: right;">300대</td>
+<td style="text-align: right;">900대, 회차별 최저 93%</td>
+</tr>
+<tr>
+<td>동시 접속에서 처음 기준에 미달한 단계</td>
+<td style="text-align: right;">400대, 첫 회차 85.25%</td>
+<td style="text-align: right;">1,000대, 첫 회차 88.6%</td>
+</tr>
+<tr>
+<td>1,000대 분산 전송의 정상 응답 p99</td>
+<td style="text-align: right;">284ms</td>
+<td style="text-align: right;">143ms</td>
+</tr>
+</tbody>
+</table>
+<p>1,000대 분산 전송 단계에서는 전후 모두 측정 구간 3,000건에 정상 응답했습니다. 동시 접속 시험에서는 응답 제한 시간을 넘긴 요청의 데이터 저장 여부도 DB에서 별도로 확인했습니다. 시험 수치는 결과 JSON의 관측값이며, 서버 커밋과 실행 프로파일은 해당 JSON에 기록돼 있지 않습니다.</p>
+<h3>센서 타임라인 API 응답 시간 2,130ms → 667ms</h3>
+<p>센서 타임라인 조회 시 응답 지연과 CPU 사용량 상승이 함께 나타났습니다. 요청을 보내면서 프로세스별 CPU 사용량을 확인해 MySQL을 우선 조사했습니다. 실행 계획에서 센서 수집 테이블 약 272만 행을 전체 스캔할 것으로 추정했고, 스키마에 정의된 복합 인덱스가 운영 DB에 반영되지 않은 것을 확인했습니다.</p>
+<p>디스크 공간을 확보한 뒤 게이트웨이 수집 ID와 센서 수집 시각으로 구성된 복합 인덱스를 적용했습니다. 실행 계획의 접근 방식이 전체 스캔에서 인덱스 조회로 바뀌었고, 같은 조건에서 API 호출 시간이 약 <strong>2,130ms에서 667ms로 68.7% 감소</strong>했습니다. 해당 요청에서 관찰한 MySQL CPU 사용량은 약 60%에서 3%로 낮아졌습니다.</p>
+</section>
+<header class="cover wecargo" id="chapter-wecargo" aria-label="위카고 프로젝트 표지"><div><img src="/asset/wecargo-logo.png" width="2112" height="512" alt="wecargo"><p>B2B 물류 플랫폼</p></div></header>
+<section class="chapter"><h2>WECARGO 물류 플랫폼</h2>
+<p><strong>위앨리스 | 2024년 7월 개발 착수 | 백엔드 전담, 프론트엔드 개발자와 협업</strong></p>
+<p>포워더와 고객사가 화물 정보와 문서를 조회하고 공유하는 B2B 물류 플랫폼입니다. 선적 단위인 MBL과 고객 화물인 HBL의 관계를 기준으로 데이터 모델과 API를 설계했고, 외부 서비스 연동과 배포, 고객 요청 대응까지 담당했습니다.</p>
+<p><strong>맡은 역할</strong> — 화물과 문서의 데이터 모델, 고객사별 접근 권한, 결제와 외부 API 연동을 설계하고 구현했습니다. 배포와 고객 요청 대응을 맡았고, 화면에 필요한 데이터와 API 응답 규칙은 프론트엔드 개발자와 함께 정했습니다.</p>
+<h3>고객사별 화물과 문서 접근 권한</h3>
+<p>화물의 소유 회사와 공유받은 회사를 구분했습니다. 소유 회사는 조회, 수정, 문서 등록을 할 수 있고, 공유받은 회사는 공유 대상 화물을 조회할 수 있도록 했습니다. 동시 MBL 등록 요청에서 중복 저장이 발생했을 때는 중복 검증 로직을 수정하고 DB에 복합 유니크 제약을 추가했습니다.</p>
+<h3>결제, 물류 정보 연동, 배포</h3>
+<p>NICE Payments의 빌링키를 이용한 정기결제와 환불을 구현하고, 승인 실패 시 재시도와 구독 상태 처리를 구성했습니다. SeaVantage에서 선박 위치와 입출항 일정 등 물류 정보를 가져와 하루 네 차례 동기화했습니다. GitHub Actions와 AWS EC2, Docker, RDS로 배포 환경을 구성하고 운영했습니다.</p>
+<h3>프론트엔드와 API 규칙 합의</h3>
+<p>화면에서 여러 API 응답을 조합해야 하는 부담을 확인하고, 요청과 응답 구조, 오류 코드, 페이지네이션과 빈 값 표현 기준을 프론트엔드 개발자와 협의했습니다. 기존 API 약 82개의 변경 범위를 고려해 핵심 화물 기능부터 순차 적용했습니다.</p>
+</section>
+<section class="chapter" id="chapter-talks"><h2>사내 기술 발표와 문서화</h2>
+<h3>WECARGO 인증과 인가</h3>
+<p>WECARGO의 로그인과 권한 판단 흐름을 분석하고, 토큰 갱신 기능을 도입할 때 팀이 검토해야 할 내용을 발표 자료로 직접 정리했습니다. Refresh Token 도입안과 함께 토큰 만료, 갱신 실패, 로그아웃 상황에서 프론트엔드와 백엔드가 각각 처리할 일을 제안했습니다.</p>
+<h3>AI와 함께 외부 데이터 연결하기</h3>
+<p>REST API와 HTTP 요청 및 응답의 기본을 설명하고, 공공데이터 API를 웹 화면에 연결하는 실습 자료를 구성했습니다. 공식 문서에서 인증과 필수 파라미터를 찾고, 작은 API 요청을 먼저 성공시킨 뒤, AI가 생성한 코드가 공식 규격에 맞는지 확인하는 순서로 실습을 설계했습니다.</p>
+</section>
+<section class="chapter" id="chapter-earlier"><h2>이전 프로젝트</h2>
+<ul>
+<li><strong>LG전자 TV OS 관리 플랫폼 고도화</strong> — 대용량 데이터 추출과 다운로드 기능을 단독 개발했습니다. 비동기 작업 큐로 파일 생성을 순차 처리하고, 10,000건 단위 분할 조회와 SXSSF를 적용해 메모리 누적을 줄였습니다. 운영 데이터로 파일 생성을 확인하고 nGrinder로 부하 시험을 수행했습니다.</li>
+<li><strong>KooRoo API 서버 운영 준비</strong> — Prometheus와 Grafana, Uptime Kuma를 구성했습니다. JMeter로 약 100개 계정을 활용한 사용자 시나리오를 검증하고, 동시 로그인 중 발견한 오류의 재현 조건을 개발 담당자에게 전달했습니다.</li>
+<li><strong>Habiters</strong> — 해커톤 이후 개발을 이어가 습관 관리 REST API를 공개 배포했습니다. 배포 환경에서 로그를 확인할 수 있도록 Logback을 적용하고, Spring REST Docs로 API 테스트와 문서 생성을 연결했습니다. <a href="https://github.com/potenday-project/Habiters_BE">Habiters 백엔드 저장소</a></li>
+</ul>
+</section>
+</main>
+</body>
+</html>

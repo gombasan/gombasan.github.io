@@ -1,3 +1,193 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="한태희 백엔드 포트폴리오 — 실행 계획으로 센서 조회의 병목을 좁히기"><title>실행 계획으로 센서 조회의 병목을 좁히기 | 한태희</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><header class="bar frame"><a class="brand" href="index.html">한태희<span class="muted"> / Backend</span></a><nav aria-label="주요 메뉴"><a href="index.html#work">프로젝트</a><a class="github" href="https://github.com/gombasan">GitHub ↗</a></nav></header><main class="frame" id="main"><nav class="breadcrumb" aria-label="현재 위치"><a href="index.html#work">프로젝트</a><span>/</span><a href="iot.html">IoT</a><span>/ 엔지니어링 노트</span></nav><div class="article-hero"><p class="eyebrow">IoT / ENGINEERING NOTE</p><h1>실행 계획으로 센서 조회의<br>병목을 좁히기</h1><p class="intro">측정 시각의 의미를 유지하면서 실제 DB의 인덱스 누락을 해결한 과정입니다.</p><div class="meta"><span>IoT  /  수집 서버 및 모니터링 API</span><div class="skill-tags"><span class="skill-tag">MySQL</span><span class="skill-tag">Java NIO</span></div></div></div><div class="article-layout"><nav class="toc" aria-label="사례 목차"><a href="#requirement">01. 병목을 프로세스와 실행 계획으로 좁히기</a><a href="#design">02. 측정 시각의 의미를 유지한 인덱스</a><a href="#result">03. 인덱스 적용 전후 비교</a></nav><article class="article"><section id="requirement"><h2>01. 병목을 프로세스와 실행 계획으로 좁히기</h2><p>게이트웨이와 센서 측정 시각 범위로 타임라인을 조회하는 API가 느렸습니다.<br>Java 앱과 MySQL이 같은 서버에 있어 전체 CPU만으로는 어느 쪽을 먼저 조사해야 할지 판단하기 어려웠습니다.</p><p>요청 중 프로세스별 CPU를 확인했을 때 <code>mysqld</code> 사용률이 순간 약 60%까지 상승했습니다.<br>DB를 우선 조사하고 <code>EXPLAIN FORMAT=JSON</code>으로 조회 계획을 확인했습니다.</p><p>센서 수집 테이블은 <code>ALL</code> 접근으로 전체 약 272만 행을 스캔할 것으로 추정됐습니다.<br>코드와 스키마 파일에 있던 복합 인덱스가 실제 DB에는 없었습니다.<br><code>ddl-auto: none</code> 환경이었으며 </p></section><section id="design"><h2>02. 측정 시각의 의미를 유지한 인덱스</h2><p><code>(gateway_collect_id, sensor_timestamp)</code> 복합 인덱스를 적용했습니다.<br>조인되는 게이트웨이 수집 ID로 후보를 좁힌 뒤 센서 측정 시각을 인덱스 단계에서 검사하도록 했습니다.</p><div class="callout"><p><strong>게이트웨이 전송 시각에 같은 기간 조건을 추가하지 않았습니다.</strong> 늦게 전송된 데이터도 센서의 측정 시각이 조회 범위에 들어오면 보여줘야 하기 때문입니다.</p></div><pre><code>-- 인덱스 구성 예시
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="한태희 백엔드 포트폴리오 — 실행 계획으로 센서 조회가 느린 원인 찾기"
+    />
+    <title>실행 계획으로 센서 조회가 느린 원인 찾기 | 한태희</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">본문으로 건너뛰기</a>
+    <header class="bar frame">
+      <a class="brand" href="index.html"
+        >한태희<span class="muted"> / Backend</span></a
+      >
+      <nav aria-label="주요 메뉴">
+        <a href="index.html#work">프로젝트</a
+        ><a class="github" href="https://github.com/gombasan">GitHub ↗</a>
+      </nav>
+    </header>
+    <main class="frame" id="main">
+      <nav class="breadcrumb" aria-label="현재 위치">
+        <a href="index.html#work">프로젝트</a><span>/</span
+        ><a href="iot.html">IoT</a><span>/ 엔지니어링 노트</span>
+      </nav>
+      <div class="article-hero">
+        <p class="eyebrow">IoT / ENGINEERING NOTE</p>
+        <h1>실행 계획으로 센서 조회가<br />느린 원인 찾기</h1>
+        <p class="intro">
+          센서 측정 시각으로 조회하는 조건은 유지하고, DB에 빠져 있던 인덱스를 추가했습니다.
+        </p>
+        <div class="meta">
+          <span>IoT / 수집 서버 및 모니터링 API</span>
+          <div class="skill-tags">
+            <span class="skill-tag">MySQL</span
+            ><span class="skill-tag">Java NIO</span>
+          </div>
+        </div>
+      </div>
+      <div class="article-layout">
+        <nav class="toc" aria-label="사례 목차">
+          <a href="#requirement">01. CPU 사용량과 실행 계획으로 원인 찾기</a
+          ><a href="#design">02. 조회 조건을 유지하면서 인덱스 추가</a
+          ><a href="#result">03. 인덱스 적용 전후 비교</a>
+        </nav>
+        <article class="article">
+          <section id="requirement">
+            <h2>01. CPU 사용량과 실행 계획으로 원인 찾기</h2>
+            <p>
+              특정 게이트웨이의 센서 데이터를 측정 시각 범위로 조회할 때 응답이 느렸습니다.<br />Java 앱과 MySQL이 같은 서버에 있어 전체
+              CPU만으로는 어느 쪽을 먼저 조사해야 할지 판단하기 어려웠습니다.
+            </p>
+            <p>
+              요청 중 프로세스별 CPU를 확인했을 때 <code>mysqld</code> 사용률이
+              순간 약 60%까지 상승했습니다.<br />DB를 우선 조사하고
+              <code>EXPLAIN FORMAT=JSON</code>으로 조회 계획을 확인했습니다.
+            </p>
+            <p>
+              센서 수집 테이블은 <code>ALL</code> 접근으로 전체 약 272만 행을
+              스캔할 것으로 추정됐습니다.<br />코드와 스키마 파일에 있던 복합
+              인덱스가 실제 DB에는 없었습니다.<br /><code>ddl-auto: none</code>
+              설정이라 엔티티에 인덱스를 선언해도 DB에는 자동으로 반영되지 않았습니다.
+            </p>
+          </section>
+          <section id="design">
+            <h2>02. 조회 조건을 유지하면서 인덱스 추가</h2>
+            <p>
+              <code>(gateway_collect_id, sensor_timestamp)</code> 복합 인덱스를
+              적용했습니다.<br />게이트웨이 수집 ID로 먼저 데이터를 찾고, 인덱스에서 센서 측정 시각 조건을 확인하도록 했습니다.
+            </p>
+            <div class="callout">
+              <p>
+                <strong
+                  >게이트웨이 전송 시각에 같은 기간 조건을 추가하지
+                  않았습니다.</strong
+                >
+                늦게 전송된 데이터도 센서의 측정 시각이 조회 범위에 들어오면
+                보여줘야 하기 때문입니다.
+              </p>
+            </div>
+            <pre><code>-- 인덱스 구성 예시
 CREATE INDEX idx_sensor_gateway_time
-ON sensor_reading (gateway_collect_id, sensor_timestamp);</code></pre><p>첫 인덱스 생성은 디스크 공간 부족으로 실패했습니다.<br>공간을 확보한 뒤 다시 적용했습니다.</p></section><section id="result"><h2>03. 인덱스 적용 전후 비교</h2><div class="table-wrap"><table><thead><tr><th scope="col">지표</th><th scope="col">적용 전</th><th scope="col">적용 후</th></tr></thead><tbody><tr><td>접근 방식</td><td>ALL</td><td>ref</td></tr><tr><td>예상 탐색량</td><td>전체 약 272만 행</td><td>외부 게이트웨이 수집 행당 약 3행</td></tr><tr><td>시간 조건 처리</td><td>스캔 후 검사</td><td>index_condition</td></tr><tr><td>옵티마이저 추정 비용</td><td>321,778.14</td><td>5.54</td></tr><tr><td>응답 시간 관찰값</td><td>약 2,130ms</td><td>약 667ms</td></tr><tr><td>mysqld 순간 CPU</td><td>약 60%</td><td>약 3%</td></tr></tbody></table></div><p>전체 테이블 스캔이 인덱스 기반 조회로 바뀌었으며, 임시 테이블과 filesort는 남았습니다.</p></section></article></div><nav class="next" aria-label="사례 이동"><a href="iot.html">← IoT 소개</a><a href="iot-load.html">TCP 수집 서버 부하 검증 →</a></nav></main><footer class="frame"><span>한태희  /  Backend Engineer</span><div class="footer-contact"><a class="contact-item" href="mailto:xogmlwkdi77@gmail.com" aria-label="이메일 보내기: xogmlwkdi77@gmail.com"><svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>xogmlwkdi77@gmail.com</span></a><a href="https://github.com/gombasan">GitHub ↗</a><a class="contact-item" href="https://www.linkedin.com/in/gombasan/" aria-label="LinkedIn 프로필 보기"><svg class="contact-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.75H4.98V9.2h2.95v9.55ZM6.45 7.9a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.3 10.85H15.8V14.1c0-1.11-.02-2.54-1.55-2.54-1.55 0-1.79 1.21-1.79 2.46v4.73H9.51V9.2h2.83v1.31h.04c.39-.74 1.36-1.52 2.79-1.52 2.98 0 3.58 1.96 3.58 4.5v5.26Z"/></svg><span>LinkedIn</span></a></div></footer></body></html>
+ON sensor_reading (gateway_collect_id, sensor_timestamp);</code></pre>
+            <p>
+              첫 인덱스 생성은 디스크 공간 부족으로 실패했습니다.<br />디스크 공간을 정리한 뒤 인덱스를 다시 생성했습니다.
+            </p>
+          </section>
+          <section id="result">
+            <h2>03. 인덱스 적용 전후 비교</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">지표</th>
+                    <th scope="col">적용 전</th>
+                    <th scope="col">적용 후</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>접근 방식</td>
+                    <td>ALL</td>
+                    <td>ref</td>
+                  </tr>
+                  <tr>
+                    <td>예상 탐색량</td>
+                    <td>전체 약 272만 행</td>
+                    <td>외부 게이트웨이 수집 행당 약 3행</td>
+                  </tr>
+                  <tr>
+                    <td>시간 조건 처리</td>
+                    <td>스캔 후 검사</td>
+                    <td>index_condition</td>
+                  </tr>
+                  <tr>
+                    <td>옵티마이저 추정 비용</td>
+                    <td>321,778.14</td>
+                    <td>5.54</td>
+                  </tr>
+                  <tr>
+                    <td>응답 시간 평균값</td>
+                    <td>약 2,000ms</td>
+                    <td>약 250ms</td>
+                  </tr>
+                  <tr>
+                    <td>mysqld 순간 CPU</td>
+                    <td>약 60%</td>
+                    <td>약 3%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              전체 테이블 스캔이 인덱스 기반 조회로 바뀌었고, 임시 테이블과
+              filesort는 남았습니다.
+            </p>
+          </section>
+        </article>
+      </div>
+      <nav class="next" aria-label="사례 이동">
+        <a href="iot.html">← IoT 소개</a
+        ><a href="iot-load.html">TCP 수집 서버 부하 검증 →</a>
+      </nav>
+    </main>
+    <footer class="frame">
+      <span>한태희 / Backend Engineer</span>
+      <div class="footer-contact">
+        <a
+          class="contact-item"
+          href="mailto:xogmlwkdi77@gmail.com"
+          aria-label="이메일 보내기: xogmlwkdi77@gmail.com"
+          ><svg
+            class="contact-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <path d="m3 7 9 6 9-6" /></svg
+          ><span>xogmlwkdi77@gmail.com</span></a
+        ><a href="https://github.com/gombasan">GitHub ↗</a
+        ><a
+          class="contact-item"
+          href="https://www.linkedin.com/in/gombasan/"
+          aria-label="LinkedIn 프로필 보기"
+          ><svg
+            class="contact-icon"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.75H4.98V9.2h2.95v9.55ZM6.45 7.9a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.3 10.85H15.8V14.1c0-1.11-.02-2.54-1.55-2.54-1.55 0-1.79 1.21-1.79 2.46v4.73H9.51V9.2h2.83v1.31h.04c.39-.74 1.36-1.52 2.79-1.52 2.98 0 3.58 1.96 3.58 4.5v5.26Z"
+            /></svg
+          ><span>LinkedIn</span></a
+        >
+      </div>
+    </footer>
+  </body>
+</html>

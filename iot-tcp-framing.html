@@ -1,0 +1,69 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="한태희 백엔드 포트폴리오 — TCP 분할 수신과 부분 송신 처리"><title>TCP 분할 수신과 부분 송신 처리 | 한태희</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><header class="bar frame"><a class="brand" href="index.html">한태희<span class="muted"> / Backend</span></a><nav aria-label="주요 메뉴"><a href="index.html#work">프로젝트</a><a class="github" href="https://github.com/gombasan">GitHub ↗</a></nav></header><main class="frame" id="main"><nav class="breadcrumb"><a href="index.html#work">프로젝트</a><span>/</span><a href="iot.html">IoT</a><span>/ 엔지니어링 노트</span></nav><div class="article-hero">
+  <p class="eyebrow">IoT / ENGINEERING NOTE</p>
+  <h1>TCP 바이트 스트림에서<br>장비 메시지 복원하기</h1>
+  <p class="intro">실제 장비 연동 중 메시지가 나뉘어 들어오면 파싱이 실패했습니다. 수신 바이트를 연결별로 누적하고, 일부만 전송된 응답은 다음 쓰기에서 이어 보내도록 개선했습니다.</p>
+</div>
+<article class="article standalone">
+  <h2>문제 확인과 원인 분석</h2>
+  <p>TCP는 바이트 스트림이라 애플리케이션 메시지의 경계를 보존하지 않습니다. 장비가 보낸 메시지 한 건이 여러 번의 <code>read()</code>에 나뉘거나, 메시지 여러 건이 한 번에 읽힐 수 있습니다. 읽은 데이터를 바로 메시지 한 건으로 해석하면 미완성 프레임을 파싱하게 됩니다.</p>
+  <p>비차단 소켓의 <code>write()</code>도 버퍼 전체를 한 번에 받아들이지 않을 수 있습니다. 남은 바이트를 보관하지 않으면 응답 일부가 전송되지 않은 채 남습니다.</p>
+  <h2>개선</h2>
+  <h3>수신 버퍼에서 완성된 프레임만 처리</h3>
+  <p>연결별 버퍼에 읽은 바이트를 누적하고, 완성된 프레임만 분리해 파싱했습니다. 한 번의 읽기로 여러 프레임이 들어오면 순서대로 처리하고, 끝에 남은 미완성 프레임은 다음 읽기까지 보존했습니다.</p>
+  <details>
+    <summary>분할 수신 테스트 코드 보기</summary>
+    <p>첫 16바이트만 들어왔을 때 디코더가 결과를 반환하지 않고, 버퍼의 읽기 위치도 그대로인지 확인합니다. 이후 <code>compact()</code>로 남은 데이터를 보존하고 나머지 바이트를 붙인 뒤, 원래 메시지가 복원되는지 검증합니다.</p>
+    <div class="code-example"><div class="code-example-label">Java</div><pre tabindex="0" aria-label="Java 코드"><code><span class="code-type">@Test</span>
+<span class="code-keyword">void</span> <span class="code-call">waitsUntilTheEncryptedFrameIsComplete</span>() {
+    <span class="code-keyword">byte</span>[] encryptedPacket = <span class="code-call">encode</span>(plainPacket);
+    <span class="code-type">ByteBuffer</span> inbound = <span class="code-type">ByteBuffer</span>.<span class="code-call">allocate</span>(<span class="code-number">128</span>);
+
+    inbound.<span class="code-call">put</span>(encryptedPacket, <span class="code-number">0</span>, <span class="code-number">16</span>);
+    inbound.<span class="code-call">flip</span>();
+
+    <span class="code-call">assertThat</span>(codec.<span class="code-call">decodeInbound</span>(inbound)).<span class="code-call">isEmpty</span>();
+    <span class="code-call">assertThat</span>(inbound.<span class="code-call">position</span>()).<span class="code-call">isZero</span>();
+
+    inbound.<span class="code-call">compact</span>();
+    inbound.<span class="code-call">put</span>(encryptedPacket, <span class="code-number">16</span>, encryptedPacket.length - <span class="code-number">16</span>);
+    inbound.<span class="code-call">flip</span>();
+
+    <span class="code-call">assertThat</span>(codec.<span class="code-call">decodeInbound</span>(inbound).<span class="code-call">orElseThrow</span>().<span class="code-call">plainPacket</span>())
+        .<span class="code-call">containsExactly</span>(plainPacket);
+    <span class="code-call">assertThat</span>(inbound.<span class="code-call">hasRemaining</span>()).<span class="code-call">isFalse</span>();
+}</code></pre></div>
+  </details>
+  <h3>송신 큐에서 남은 응답 이어 보내기</h3>
+  <p>Selector 스레드에서 연결별 송신 큐를 관리했습니다. 쓰기 후 바이트가 남아 있으면 같은 <code>ByteBuffer</code>를 큐에 유지하고, 소켓이 다시 쓰기 가능한 시점에 남은 위치부터 전송했습니다. 앞 응답을 모두 보낸 뒤 다음 응답을 처리해 송신 순서를 유지했습니다.</p>
+  <details>
+    <summary>부분 송신 처리 코드 보기</summary>
+    <p><code>write()</code>는 전송한 만큼 버퍼의 위치를 이동시킵니다. <code>hasRemaining()</code>이 참이면 큐의 현재 버퍼를 유지한 채 반환합니다. 버퍼가 비워진 뒤에만 <code>completeCurrentWrite()</code>를 호출해 다음 응답으로 넘어갑니다.</p>
+    <div class="code-example"><div class="code-example-label">Java</div><pre tabindex="0" aria-label="Java 코드"><code><span class="code-keyword">while</span> (context.<span class="code-call">hasPendingWrites</span>()) {
+    <span class="code-type">ByteBuffer</span> buffer = context.<span class="code-call">currentWriteBuffer</span>();
+    <span class="code-keyword">int</span> bytesWritten = client.<span class="code-call">write</span>(buffer);
+    <span class="code-keyword">if</span> (bytesWritten &gt; <span class="code-number">0</span>) {
+        context.<span class="code-call">onBytesWritten</span>();
+    }
+
+    <span class="code-keyword">if</span> (buffer.<span class="code-call">hasRemaining</span>()) {
+        <span class="code-keyword">return</span>;
+    }
+
+    context.<span class="code-call">completeCurrentWrite</span>();
+}
+
+key.<span class="code-call">interestOps</span>(key.<span class="code-call">interestOps</span>() &amp; ~<span class="code-type">SelectionKey</span>.<span class="code-type">OP_WRITE</span>);</code></pre></div>
+  </details>
+  <h2>재검증</h2>
+  <ul>
+    <li>미완성 프레임은 대기하고, 후속 데이터가 도착하면 완성된 메시지로 처리하는지 테스트했습니다.</li>
+    <li>연속해서 들어온 여러 프레임을 순서대로 분리하는지 확인했습니다.</li>
+    <li>부분 송신 후 남은 바이트부터 이어 보내고, 다음 응답이 앞서 전송되지 않는지 검증했습니다.</li>
+  </ul>
+  <div class="callout"><p>게이트웨이 3대와 센서 8개를 연결해 실제 장비 연동을 확인했습니다.</p></div>
+</article>
+<nav class="next" aria-label="사례 이동">
+  <a href="iot.html">← IoT 소개</a>
+  <a href="iot-load.html">가상 게이트웨이 부하 시험 →</a>
+</nav>
+</main><footer class="frame"><span>한태희  /  Backend Engineer</span><div class="footer-contact"><a class="contact-item" href="mailto:xogmlwkdi77@gmail.com" aria-label="이메일 보내기: xogmlwkdi77@gmail.com"><svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>xogmlwkdi77@gmail.com</span></a><a href="https://github.com/gombasan">GitHub ↗</a><a class="contact-item" href="https://www.linkedin.com/in/gombasan/" aria-label="LinkedIn 프로필 보기"><svg class="contact-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.75H4.98V9.2h2.95v9.55ZM6.45 7.9a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.3 10.85H15.8V14.1c0-1.11-.02-2.54-1.55-2.54-1.55 0-1.79 1.21-1.79 2.46v4.73H9.51V9.2h2.83v1.31h.04c.39-.74 1.36-1.52 2.79-1.52 2.98 0 3.58 1.96 3.58 4.5v5.26Z"/></svg><span>LinkedIn</span></a></div></footer></body></html>

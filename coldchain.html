@@ -65,10 +65,25 @@
               <code>EXPLAIN FORMAT=JSON</code>으로 조회 계획을 확인했습니다.
             </p>
             <p>
-              센서 수집 테이블은 <code>ALL</code> 접근으로 전체 약 272만 행을
-              스캔할 것으로 추정됐습니다.<br />코드와 스키마 파일에 있던 복합
-              인덱스가 실제 DB에는 없었습니다.<br /><code>ddl-auto: none</code>
-              설정이라 엔티티에 인덱스를 선언해도 DB에는 자동으로 반영되지 않았습니다.
+              게이트웨이 키와 센서 측정 시각 범위를 지정해 아래 SQL로 실행 계획을 확인했습니다.
+              <code>GATEWAY_KEY</code>는 예시 값입니다.
+            </p>
+            <pre><code>EXPLAIN FORMAT=JSON
+SELECT c.*
+FROM refrigerant.coldchain_collect AS c
+JOIN refrigerant.gateway_collect AS g ON g.id = c.gateway_collect_id
+WHERE g.gateway_key = 'GATEWAY_KEY'
+  AND c.sensor_timestamp BETWEEN '2026-10-30 00:30:18.810'
+                             AND '2026-10-30 02:54:25.793'
+ORDER BY c.sensor_timestamp, c.id;</code></pre>
+            <p>
+              게이트웨이 수집 테이블은 기존 인덱스를 사용했지만, 센서 수집 테이블은
+              <code>access_type: ALL</code>로 약 272만 행을 탐색할 것으로 추정됐습니다.
+              약 2시간 24분 범위의 조회에서도 전체 센서 수집 테이블을 스캔하는 계획이었습니다.
+            </p>
+            <p>
+              운영 DB를 확인하니 코드와 스키마 파일에 정의된 복합 인덱스가 빠져 있었습니다.
+              <code>ddl-auto: none</code> 설정에서는 엔티티의 인덱스 선언이 DB에 자동으로 반영되지 않습니다.
             </p>
           </section>
           <section id="design">
@@ -87,12 +102,8 @@
                 보여줘야 하기 때문입니다.
               </p>
             </div>
-            <pre><code>-- 인덱스 구성 예시
-CREATE INDEX idx_sensor_gateway_time
-ON sensor_reading (gateway_collect_id, sensor_timestamp);</code></pre>
-            <p>
-              첫 인덱스 생성은 디스크 공간 부족으로 실패했습니다.<br />디스크 공간을 정리한 뒤 인덱스를 다시 생성했습니다.
-            </p>
+            <pre><code>CREATE INDEX idx_coldchain_collect_gateway_timestamp
+ON refrigerant.coldchain_collect (gateway_collect_id, sensor_timestamp);</code></pre>
           </section>
           <section id="result">
             <h2>03. 인덱스 적용 전후 비교</h2>

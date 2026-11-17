@@ -14,6 +14,59 @@
     }
     * { box-sizing: border-box; }
     body { margin: 0; }
+
+    .code-example {
+      margin: 16px 0 24px;
+      border: 1px solid #343d4d;
+      border-radius: 9px;
+      background: #141a24;
+      color: #e4eaf3;
+    }
+    .code-example-label {
+      padding: 9px 16px;
+      border-bottom: 1px solid #343d4d;
+      border-radius: 8px 8px 0 0;
+      background: #202938;
+      color: #c1cddd;
+      font: 600 12px/1.5 ui-monospace, monospace;
+    }
+    .article .code-example pre {
+      margin: 0;
+      padding: clamp(14px, 3vw, 24px);
+      border: 0;
+      border-radius: 0 0 8px 8px;
+      background: transparent;
+      color: inherit;
+      font-size: 13px;
+      line-height: 1.75;
+      overflow-x: auto;
+    }
+    .code-example pre:focus-visible { outline: 2px solid #8ccaff; outline-offset: -3px; }
+    .code-example .code-keyword { color: #e3adff; }
+    .code-example .code-type { color: #8ce2ce; }
+    .code-example .code-number { color: #ffd191; }
+    .code-example .code-comment { color: #abb9ca; }
+    .code-example .code-call { color: #a3d2ff; }
+    @media print {
+      .code-example, .code-example-label { background: #fff; color: #202b26; }
+      .code-example code span { color: inherit !important; }
+    }
+
+    .project-preview {
+      max-width: 720px;
+      margin: 28px 0 0;
+    }
+    .project-preview img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+    .project-preview figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
     a { color: inherit; }
     a:focus-visible { outline: 2px solid var(--green); outline-offset: 5px; }
     .frame { width: min(calc(100% - 64px), 1100px); margin-inline: auto; }
